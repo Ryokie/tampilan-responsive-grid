@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Avatar } from '@mui/material';
+import { Box, Paper, Typography, Avatar, TextField, Container, CssBaseline } from '@mui/material';
 
 function App() {
   const [users, setUsers] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetch('https://randomuser.me/api/?results=20')
@@ -11,16 +12,41 @@ function App() {
       .catch((err) => console.error(err));
   }, []);
 
+  const filteredUsers = users.filter((user) => {
+  const fullName = `${user.name.first} ${user.name.last}`.toLowerCase();
+  const email = user.email.toLowerCase();
+  const query = searchTerm.toLowerCase();
+
+  return fullName.includes(query) || email.includes(query);
+});
+
   return (
-    <Box sx={{ p: 2, backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
+    <><CssBaseline />
+    <Box sx={{ width: '100%', minHeight: '100vh', backgroundColor: '#1a1a1a', py: 4, m: 0 }}>
+
+      <Container maxWidth="xl">
       
       <Typography variant="h4" color="white" align="center" gutterBottom sx={{ mb: 4 }}>
         Tampilan Responsive
       </Typography>
 
-      <Box sx={{ display: 'flex', flexWrap: 'wrap' }}>
+      {/* KOTAK PENCARIAN */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mb: 6 }}>
+        <TextField 
+          variant="outlined"
+          placeholder="Cari nama atau email..."
+          onChange={(e) => setSearchTerm(e.target.value)} // Simpan ketikan ke State
+          sx={{ 
+            backgroundColor: 'white', 
+            borderRadius: 1, 
+            width: { xs: '100%', md: '50%' } // Responsive width
+          }}
+        />
+      </Box>
+
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
         
-        {users.map((user, index) => (
+        {filteredUsers.map((user, index) => (
           <Box 
             key={index}
             sx={{
@@ -87,8 +113,16 @@ function App() {
           </Box>
         ))}
 
+                {filteredUsers.length === 0 && (
+          <Typography color="white" align="center" sx={{ width: '100%', mt: 4 }}>
+              Tidak ada hasil ditemukan.
+          </Typography>
+        )}
+
       </Box>
+      </Container>
     </Box>
+    </>
   );
 }
 
