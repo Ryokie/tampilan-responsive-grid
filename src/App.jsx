@@ -1,25 +1,13 @@
 import { useState, useEffect } from 'react';
-import { Box, Paper, Typography, Avatar, TextField, Container, CssBaseline, Button, Modal } from '@mui/material';
+import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { Box, Paper, Typography, Avatar, TextField, Container, CssBaseline, Button } from '@mui/material';
+import DetailUser from './DetailUser';
 
-
-  const modalStyle = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: { xs: '90%', md: 600 },
-    bgcolor: '#fff', // Latar putih biar peta jelas
-    border: '2px solid #000',
-    boxShadow: 24,
-    p: 2,
-    borderRadius: 2,
-  };
-
-function App() {
+function Home() {
   const [users, setUsers] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState('asc');
-  const [selectedUser, setSelectedUser] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch('https://randomuser.me/api/?results=20')
@@ -46,6 +34,11 @@ function App() {
         return nameA > nameB ? -1 : 1; // Urut Z ke A
       }
     });
+
+
+const handleUserClick = (user) => {
+  navigate('/detail', { state: user });
+};
 
 
   return (
@@ -93,60 +86,53 @@ function App() {
           >
             <Paper 
               elevation={3}
+              onClick={() => handleUserClick(user)} // <--- PINDAHKAN ONCLICK KESINI
               sx={{ 
-                height: '100%',               // [FIX 2] Tinggi 100% = Kotak otomatis sama tinggi
-                p: 2,
+                height: '100%', 
+                p: 2, 
                 display: 'flex', 
-                flexDirection: 'column',
+                flexDirection: 'column', 
                 alignItems: 'center', 
-                justifyContent: 'flex-start', // [FIX 3] Rata Atas = Foto jadi sejajar rapi
-                gap: 1,                       // Tambahan: Jarak antar elemen di dalam
+                justifyContent: 'flex-start', 
+                gap: 1, 
                 backgroundColor: '#2c2c2c', 
-                color: 'white',
-                textAlign: 'center',
-                borderRadius: 2,
-                boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
+                color: 'white', 
+                textAlign: 'center', 
+                borderRadius: 2, 
+                boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
+                cursor: 'pointer',          // Tambah ini biar ada ikon tangan
+                transition: '0.2s',         // Tambah animasi dikit
+                '&:hover': { transform: 'scale(1.02)' } 
               }}
             >
               
-              {/* 1. Foto Profil */}
-              <Avatar 
-                src={user.picture.large} 
-                alt={user.name.first}
-                sx={{ width: 80, height: 80, mb: 1, border: '3px solid #2196f3' }} 
-              />
+              {/* Foto Profil */}
+              <Avatar src={user.picture.large} alt={user.name.first} sx={{ width: 80, height: 80, mb: 1, border: '3px solid #2196f3' }} />
 
-              {/* 2. Nama Peserta */}
+              {/* Nama */}
               <Typography variant="h6" sx={{ fontWeight: 'bold', fontSize: '1rem', lineHeight: 1.2 }}>
                 {user.name.first} {user.name.last}
               </Typography>
 
-              {/* [BARU] No Telepon */}
+              {/* No Telp */}
               <Typography variant="caption" sx={{ color: '#4caf50', fontWeight: 'bold', mb: 0.5 }}>
                 📞 {user.phone}
               </Typography>
 
-              {/* 3. Email */}
+              {/* Email */}
               <Typography variant="body2" sx={{ color: '#aaa', fontSize: '0.8rem', mb: 1, wordBreak: 'break-all' }}>
                 {user.email}
               </Typography>
 
-              {/* 4. Alamat (Dibuat jadi tombol klik) */}
-              <Box 
-                onClick={() => setSelectedUser(user)} // Klik -> Simpan user ke state
-                sx={{ 
-                  marginTop: 'auto', 
-                  cursor: 'pointer', 
-                  p: 1, 
-                  borderRadius: 1,
-                  transition: '0.2s',
-                  '&:hover': { backgroundColor: '#383838', color: '#64b5f6' } 
-                }}
-              >
-                <Typography variant="caption" sx={{ color: 'inherit', textDecoration: 'underline' }}>
-                   📍 {user.location.city}, {user.location.country}
-                </Typography>
-              </Box>
+              {/* Alamat (Cukup Typography saja, Box dan Paper tambahannya HAPUS) */}
+              <Typography variant="caption" sx={{ color: '#2196f3', marginTop: 'auto' }}>
+                  📍 {user.location.city}, {user.location.country}
+              </Typography>
+
+              <Typography variant="caption" sx={{ color: '#888', fontSize: '0.7rem', mt: 1 }}>
+                  (Klik untuk detail)
+              </Typography>
+
             </Paper>
           </Box>
         ))}
@@ -160,36 +146,25 @@ function App() {
       </Box>
       </Container>
     </Box>
-    <Modal
-      open={selectedUser !== null} 
-      onClose={() => setSelectedUser(null)}
-    >
-      <Box sx={modalStyle}>
-        {selectedUser && (
-          <>
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: 'black' }}>
-              Lokasi: {selectedUser.name.first}
-            </Typography>
-            
-            {/* Peta OpenStreetMap */}
-            <Box sx={{ width: '100%', height: '300px', borderRadius: 2, overflow: 'hidden', border: '1px solid #ccc' }}>
-              <iframe
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                scrolling="no"
-                src={`https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(selectedUser.location.coordinates.longitude)-0.01}%2C${parseFloat(selectedUser.location.coordinates.latitude)-0.01}%2C${parseFloat(selectedUser.location.coordinates.longitude)+0.01}%2C${parseFloat(selectedUser.location.coordinates.latitude)+0.01}&layer=mapnik&marker=${selectedUser.location.coordinates.latitude}%2C${selectedUser.location.coordinates.longitude}`}
-              ></iframe>
-            </Box>
 
-            <Button onClick={() => setSelectedUser(null)} variant="outlined" fullWidth sx={{ mt: 2 }}>
-              Tutup
-            </Button>
-          </>
-        )}
-      </Box>
-    </Modal>
+    </>
+  );
+}
 
+// INI ADALAH KOMPONEN UTAMA BARU
+function App() {
+  return (
+    <>
+      <CssBaseline />
+      <Router>
+        <Routes>
+          {/* Rute 1: Halaman Depan (Panggil fungsi Home yg tadi kita rename) */}
+          <Route path="/" element={<Home />} />
+
+          {/* Rute 2: Halaman Detail (Panggil file DetailUser.jsx) */}
+          <Route path="/detail" element={<DetailUser />} />
+        </Routes>
+      </Router>
     </>
   );
 }
