@@ -4,17 +4,32 @@ import { Box, Paper, Typography, Avatar, TextField, Container, CssBaseline, Butt
 import DetailUser from './DetailUser';
 
 function Home() {
-  const [users, setUsers] = useState([]);
+  // Cek Local Storage langsung saat State dibuat
+  const [users, setUsers] = useState(() => {
+    const saved = localStorage.getItem('data_peserta_local');
+    if (saved) {
+      return JSON.parse(saved);
+    } else {
+      return []; 
+    }
+  });
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState('asc');
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetch('https://randomuser.me/api/?results=20')
-      .then((res) => res.json())
-      .then((data) => setUsers(data.results))
-      .catch((err) => console.error(err));
-  }, []);
+    // Kalau data users masih kosong, Fetch API
+    if (users.length === 0) {
+      fetch('https://randomuser.me/api/?results=20')
+        .then((res) => res.json())
+        .then((data) => {
+          setUsers(data.results);
+          // Simpan di Local Storage
+          localStorage.setItem('data_peserta_local', JSON.stringify(data.results));
+        })
+        .catch((err) => console.error(err));
+    }
+ }, [users.length]);
 
   const filteredUsers = users
     .filter((user) => {
@@ -23,7 +38,7 @@ function Home() {
       const query = searchTerm.toLowerCase();
       return fullName.includes(query) || email.includes(query);
     })
-    // --- INI TAMBAHAN LOGIKA SORTINGNYA ---
+  
     .sort((a, b) => {
       const nameA = a.name.first.toLowerCase();
       const nameB = b.name.first.toLowerCase();
