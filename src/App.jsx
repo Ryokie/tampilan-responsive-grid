@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import { Box, Paper, Typography, Avatar, TextField, Container, CssBaseline, Button } from '@mui/material';
+import { Box, Paper, Typography, Avatar, TextField, Container, CssBaseline, Button, IconButton } from '@mui/material';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import DetailUser from './DetailUser';
+import FavoriteUser from './FavoriteUser';
 
 function Home() {
   // Cek Local Storage langsung saat State dibuat
@@ -16,6 +19,32 @@ function Home() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState('asc');
   const navigate = useNavigate();
+  const [favorites, setFavorites] = useState(() => {
+  const savedFavs = localStorage.getItem('my_favorites');
+  return savedFavs ? JSON.parse(savedFavs) : [];
+});
+
+  // 2. Fungsi saat tombol Love diklik
+  const toggleFavorite = (user, event) => {
+    event.stopPropagation(); // Biar gak pindah ke halaman detail
+    
+    const currentFavs = JSON.parse(localStorage.getItem('my_favorites') || '[]');
+    const isExist = currentFavs.find((u) => u.email === user.email);
+
+    let newFavs;
+    if (isExist) {
+      newFavs = currentFavs.filter((u) => u.email !== user.email); // Hapus
+    } else {
+      newFavs = [...currentFavs, user]; // Tambah
+    }
+
+    localStorage.setItem('my_favorites', JSON.stringify(newFavs));
+    setFavorites(newFavs);
+  };
+
+  // 3. Cek apakah user ini ada di daftar favorit?
+  const isFavorite = (email) => favorites.some((u) => u.email === email);
+  // ---------------------
 
   useEffect(() => {
     // Kalau data users masih kosong, Fetch API
@@ -86,6 +115,16 @@ const handleUserClick = (user) => {
           Sort ({sortOrder === 'asc' ? 'A-Z' : 'Z-A'})
         </Button>
 
+        {/* Tombol Ke Halaman Favorit */}
+        <Button 
+          variant="contained" 
+          color="secondary"
+          onClick={() => navigate('/favorites')}
+          sx={{ height: 56, fontWeight: 'bold', backgroundColor: '#e91e63' }} 
+        >
+          ❤️ Favorites
+        </Button>
+
       </Box>
 
       <Box sx={{ display: 'flex', flexWrap: 'wrap', mx: -2 }}>
@@ -108,6 +147,7 @@ const handleUserClick = (user) => {
                 display: 'flex', 
                 flexDirection: 'column', 
                 alignItems: 'center', 
+                position: 'relative', 
                 justifyContent: 'flex-start', 
                 gap: 1, 
                 backgroundColor: '#2c2c2c', 
@@ -115,12 +155,26 @@ const handleUserClick = (user) => {
                 textAlign: 'center', 
                 borderRadius: 2, 
                 boxShadow: '0 4px 10px rgba(0,0,0,0.3)',
-                cursor: 'pointer',          // Tambah ini biar ada ikon tangan
-                transition: '0.2s',         // Tambah animasi dikit
+                cursor: 'pointer',          
+                transition: '0.2s',        
                 '&:hover': { transform: 'scale(1.02)' } 
               }}
             >
-              
+
+              {/* --- TOMBOL LOVE --- */}
+            <IconButton 
+              onClick={(e) => toggleFavorite(user, e)}
+              sx={{ 
+                position: 'absolute', 
+                top: 10, 
+                right: 10, 
+                color: isFavorite(user.email) ? '#f44336' : '#888', // Merah jika favorit
+                zIndex: 10 // Pastikan di atas layer lain
+              }}
+            >
+              {isFavorite(user.email) ? <FavoriteIcon /> : <FavoriteBorderIcon />}
+            </IconButton>
+
               {/* Foto Profil */}
               <Avatar src={user.picture.large} alt={user.name.first} sx={{ width: 80, height: 80, mb: 1, border: '3px solid #2196f3' }} />
 
@@ -175,9 +229,8 @@ function App() {
         <Routes>
           {/* Rute 1: Halaman Depan (Panggil fungsi Home yg tadi kita rename) */}
           <Route path="/" element={<Home />} />
-
-          {/* Rute 2: Halaman Detail (Panggil file DetailUser.jsx) */}
           <Route path="/detail" element={<DetailUser />} />
+          <Route path="/favorites" element={<FavoriteUser />} />
         </Routes>
       </Router>
     </>
